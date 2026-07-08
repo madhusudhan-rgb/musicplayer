@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Musicplyer",
+    "slug": "musicplayer23",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/mainicon.png",
+    "scheme": "musicplayer23",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "icon": "./assets/images/mainicon.png"
+    },
+    "android": {
+      "adaptiveIcon": {
+        
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ],
+      "package": "com.madhusudhant.musicplayer23"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/mainicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#000000"
+        }
+      ],
+      "expo-audio"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2a57c0d6-4154-40c5-9c09-9800387feb29"
+      }
+    }
+  }
+}
