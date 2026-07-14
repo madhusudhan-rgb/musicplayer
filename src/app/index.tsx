@@ -4,6 +4,7 @@ import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Image,
   ImageBackground,
   Pressable,
   ScrollView,
@@ -12,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useMp3Metadata } from "../hooks/use-mp3-metadata";
 
 export default function MusicPlayer() {
   const [songs, setSongs] = useState<any[]>([]);
@@ -40,6 +42,7 @@ export default function MusicPlayer() {
       const result = await DocumentPicker.getDocumentAsync({
         type: "audio/*",
         multiple: true,
+        copyToCacheDirectory: false, // Android: keeps content:// URI so expo-file-system can read it
       });
       if (!result.canceled && result.assets?.length > 0) {
         const newSongs = [...songs, ...result.assets];
@@ -137,15 +140,18 @@ export default function MusicPlayer() {
       ? "repeat"
       : "arrow-forward-outline";
 
+  const { metadata: songMetadata } = useMp3Metadata(
+    currentSong?.uri || null
+  );
+
   return (
     <ImageBackground
-      source={require("../../assets/images/bg.jpg")}
+      source={require("../../assets/images/bg.avif")}
       style={styles.background}
       resizeMode="cover"
     >
       <View style={styles.overlay} />
       <SafeAreaView style={styles.safe}>
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>My Music</Text>
           <Pressable style={styles.addBtn} onPress={pickSongs}>
@@ -154,129 +160,87 @@ export default function MusicPlayer() {
           </Pressable>
         </View>
 
-        {/* Now Playing */}
         {currentSong ? (
           <View style={styles.nowPlaying}>
             <View style={styles.artwork}>
-              <Ionicons
-                name="musical-notes"
-                size={48}
-                color="rgba(255,255,255,0.2)"
-              />
+              {songMetadata?.coverArt ? (
+                <Image
+                  source={{ uri: `data:${songMetadata.mimeType || "image/jpeg"};base64,${songMetadata.coverArt}` }}
+                  style={[StyleSheet.absoluteFill, { borderRadius: 50 }]}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Ionicons name="musical-notes" size={48} color="rgba(255,255,255,0.2)" />
+              )}
             </View>
 
             <Text style={styles.songTitle} numberOfLines={1}>
-              {stripExtension(currentSong.name)}
+              {songMetadata?.title || stripExtension(currentSong.name)}
             </Text>
-            <Text style={styles.songArtist}>Unknown Artist</Text>
-
-            {/* Progress bar */}
-            <View style={styles.progressRow}>
-              <Text style={styles.timeText}>
-                {formatTime(status.currentTime || 0)}
+            <Text style={styles.songArtist}>
+              {songMetadata?.artist || "Unknown Artist"}
+            </Text>
+            {songMetadata?.album && (
+              <Text style={styles.songAlbum} numberOfLines={1}>
+                {songMetadata.album}
               </Text>
-              <View
-                ref={progressBarRef}
-                style={styles.progressBarHit}
-              >
+            )}
+
+            <View style={styles.progressRow}>
+              <Text style={styles.timeText}>{formatTime(status.currentTime || 0)}</Text>
+              <View ref={progressBarRef} style={styles.progressBarHit}>
                 <Pressable
                   style={styles.progressBarHit}
                   onPress={(e) => handleSeek(e.nativeEvent.locationX)}
                 >
                   <View style={styles.progressTrack}>
-                    <View
-                      style={[
-                        styles.progressFill,
-                        { width: `${Math.min(progress * 100, 100)}%` },
-                      ]}
-                    />
-                    <View
-                      style={[
-                        styles.progressThumb,
-                        { left: `${Math.min(progress * 100, 96)}%` },
-                      ]}
-                    />
+                    <View style={[styles.progressFill, { width: `${Math.min(progress * 100, 100)}%` }]} />
+                    <View style={[styles.progressThumb, { left: `${Math.min(progress * 100, 96)}%` }]} />
                   </View>
                 </Pressable>
               </View>
-              <Text style={styles.timeText}>
-                {formatTime(status.duration || 0)}
-              </Text>
+              <Text style={styles.timeText}>{formatTime(status.duration || 0)}</Text>
             </View>
 
-            {/* Controls */}
             <View style={styles.controls}>
-              <Pressable
-                onPress={() => setShuffled((p) => !p)}
-                style={styles.sideBtn}
-              >
-                <Ionicons
-                  name="shuffle"
-                  size={22}
-                  color={shuffled ? "#00cc2c" : "rgba(255,255,255,0.35)"}
-                />
+              <Pressable onPress={() => setShuffled((p) => !p)} style={styles.sideBtn}>
+                <Ionicons name="shuffle" size={22} color={shuffled ? "#00cc2c" : "rgba(255,255,255,0.35)"} />
               </Pressable>
-
               <Pressable onPress={playPrevious} style={styles.controlBtn}>
                 <Ionicons name="play-skip-back" size={26} color="#fff" />
               </Pressable>
-
               <Pressable onPress={togglePlayback} style={styles.playBtn}>
-                <Ionicons
-                  name={status.playing ? "pause" : "play"}
-                  size={30}
-                  color="#fff"
-                />
+                <Ionicons name={status.playing ? "pause" : "play"} size={30} color="#fff" />
               </Pressable>
-
               <Pressable onPress={playNext} style={styles.controlBtn}>
                 <Ionicons name="play-skip-forward" size={26} color="#fff" />
               </Pressable>
-
               <Pressable
-                onPress={() =>
-                  setRepeatMode((p) =>
-                    p === "off" ? "all" : p === "all" ? "one" : "off"
-                  )
-                }
+                onPress={() => setRepeatMode((p) => p === "off" ? "all" : p === "all" ? "one" : "off")}
                 style={styles.sideBtn}
               >
                 <Ionicons
                   name={repeatIcon}
                   size={22}
-                  color={
-                    repeatMode !== "off"
-                      ? "#00cc2c"
-                      : "rgba(255,255,255,0.35)"
-                  }
+                  color={repeatMode !== "off" ? "#00cc2c" : "rgba(255,255,255,0.35)"}
                 />
-                {repeatMode === "one" && (
-                  <Text style={styles.repeatOneLabel}>1</Text>
-                )}
+                {repeatMode === "one" && <Text style={styles.repeatOneLabel}>1</Text>}
               </Pressable>
             </View>
           </View>
         ) : (
           <View style={styles.emptyPlayer}>
-            <Ionicons
-              name="musical-notes-outline"
-              size={56}
-              color="rgba(255,255,255,0.12)"
-            />
+            <Ionicons name="musical-notes-outline" size={56} color="rgba(255,255,255,0.12)" />
             <Text style={styles.emptyPlayerText}>No song playing</Text>
-            <Text style={styles.emptyPlayerSub}>
-              Tap "Add Songs" to get started
-            </Text>
+            <Text style={styles.emptyPlayerSub}>Tap "Add Songs" to get started</Text>
           </View>
         )}
 
-        {/* Playlist */}
         <View style={styles.playlistContainer}>
           <View style={styles.playlistHeaderRow}>
             <Text style={styles.playlistHeader}>Playlist</Text>
             <Text style={styles.playlistCount}>{songs.length} songs</Text>
           </View>
-
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={styles.playlist}
@@ -295,46 +259,22 @@ export default function MusicPlayer() {
                   >
                     <View style={styles.songIndexBox}>
                       {active && status.playing ? (
-                        <Ionicons
-                          name="musical-note"
-                          size={14}
-                          color="#00cc2c"
-                        />
+                        <Ionicons name="musical-note" size={14} color="#00cc2c" />
                       ) : (
-                        <Text
-                          style={[
-                            styles.indexText,
-                            active && { color: "#00cc2c" },
-                          ]}
-                        >
+                        <Text style={[styles.indexText, active && { color: "#00cc2c" }]}>
                           {index + 1}
                         </Text>
                       )}
                     </View>
-
-                    <Text
-                      style={[
-                        styles.songText,
-                        active && styles.activeSongText,
-                      ]}
-                      numberOfLines={1}
-                    >
+                    <Text style={[styles.songText, active && styles.activeSongText]} numberOfLines={1}>
                       {stripExtension(song.name)}
                     </Text>
-
                     <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        removeSong(index);
-                      }}
+                      onPress={(e) => { e.stopPropagation(); removeSong(index); }}
                       hitSlop={12}
                       style={styles.removeBtn}
                     >
-                      <Ionicons
-                        name="close"
-                        size={16}
-                        color="rgba(255,255,255,0.3)"
-                      />
+                      <Ionicons name="close" size={16} color="rgba(255,255,255,0.3)" />
                     </Pressable>
                   </Pressable>
                 );
@@ -349,12 +289,8 @@ export default function MusicPlayer() {
 
 const styles = StyleSheet.create({
   background: { flex: 1 },
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(0,0,0,0.52)",
-  },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.52)" },
   safe: { flex: 1 },
-
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -368,13 +304,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#00cc2c",
+    backgroundColor: "#00000093",
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 50,
   },
   addBtnText: { color: "#fff", fontWeight: "700", fontSize: 13 },
-
   nowPlaying: {
     marginHorizontal: 16,
     backgroundColor: "rgba(255,255,255,0.07)",
@@ -395,21 +330,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 14,
+    overflow: "hidden",
   },
-  songTitle: {
-    color: "#fff",
-    fontSize: 17,
-    fontWeight: "700",
-    textAlign: "center",
-    width: "100%",
-  },
-  songArtist: {
-    color: "rgba(255,255,255,0.38)",
-    fontSize: 13,
-    marginTop: 3,
-    marginBottom: 16,
-  },
-
+  songTitle: { color: "#fff", fontSize: 17, fontWeight: "700", textAlign: "center", width: "100%" },
+  songArtist: { color: "rgba(255,255,255,0.38)", fontSize: 13, marginTop: 3, marginBottom: 6 },
+  songAlbum: { color: "rgba(255,255,255,0.28)", fontSize: 12, marginTop: 2, marginBottom: 12 },
   progressRow: {
     width: "100%",
     flexDirection: "row",
@@ -418,16 +343,8 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   progressBarHit: { flex: 1, height: 32, justifyContent: "center" },
-  progressTrack: {
-    height: 4,
-    backgroundColor: "rgba(255,255,255,0.13)",
-    borderRadius: 2,
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#00cc2c",
-    borderRadius: 2,
-  },
+  progressTrack: { height: 4, backgroundColor: "rgba(255,255,255,0.13)", borderRadius: 2 },
+  progressFill: { height: "100%", backgroundColor: "#00cc2c", borderRadius: 2 },
   progressThumb: {
     position: "absolute",
     width: 13,
@@ -437,30 +354,10 @@ const styles = StyleSheet.create({
     top: -4.5,
     marginLeft: -6,
   },
-  timeText: {
-    color: "rgba(255,255,255,0.45)",
-    fontSize: 11,
-    minWidth: 34,
-    textAlign: "center",
-  },
-
-  controls: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 18,
-  },
-  sideBtn: {
-    width: 36,
-    height: 36,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  controlBtn: {
-    width: 44,
-    height: 44,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  timeText: { color: "rgba(255,255,255,0.45)", fontSize: 11, minWidth: 34, textAlign: "center" },
+  controls: { flexDirection: "row", alignItems: "center", gap: 18 },
+  sideBtn: { width: 36, height: 36, justifyContent: "center", alignItems: "center" },
+  controlBtn: { width: 44, height: 44, justifyContent: "center", alignItems: "center" },
   playBtn: {
     width: 66,
     height: 66,
@@ -482,7 +379,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: "800",
   },
-
   emptyPlayer: {
     marginHorizontal: 16,
     backgroundColor: "rgba(255,255,255,0.04)",
@@ -494,32 +390,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     gap: 8,
   },
-  emptyPlayerText: {
-    color: "rgba(255,255,255,0.45)",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  emptyPlayerText: { color: "rgba(255,255,255,0.45)", fontSize: 16, fontWeight: "600" },
   emptyPlayerSub: { color: "rgba(255,255,255,0.25)", fontSize: 13 },
-
   playlistContainer: { flex: 1, paddingHorizontal: 16 },
-  playlistHeaderRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 8,
-    marginBottom: 10,
-  },
+  playlistHeaderRow: { flexDirection: "row", alignItems: "baseline", gap: 8, marginBottom: 10 },
   playlistHeader: { color: "#fff", fontSize: 18, fontWeight: "700" },
-  playlistCount: {
-    color: "rgba(255,255,255,0.35)",
-    fontSize: 13,
-  },
+  playlistCount: { color: "rgba(255,255,255,0.35)", fontSize: 13 },
   playlist: { flex: 1 },
-  emptyList: {
-    color: "rgba(255,255,255,0.25)",
-    textAlign: "center",
-    marginTop: 40,
-    fontSize: 15,
-  },
+  emptyList: { color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: 40, fontSize: 15 },
   songItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -535,15 +413,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(0,204,44,0.2)",
   },
-  songIndexBox: {
-    width: 22,
-    alignItems: "center",
-  },
-  indexText: {
-    color: "rgba(255,255,255,0.3)",
-    fontSize: 13,
-    fontWeight: "600",
-  },
+  songIndexBox: { width: 22, alignItems: "center" },
+  indexText: { color: "rgba(255,255,255,0.3)", fontSize: 13, fontWeight: "600" },
   songText: { color: "rgba(255,255,255,0.78)", fontSize: 14, flex: 1 },
   activeSongText: { color: "#00ff55", fontWeight: "600" },
   removeBtn: { padding: 4 },

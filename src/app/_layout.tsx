@@ -23,7 +23,7 @@ function TabContent() {
           right: 24,
           height: 64,
           borderRadius: 50,
-          backgroundColor: "rgba(18,18,18,0.92)",
+          backgroundColor: "rgba(18, 18, 18, 0.28)",
           borderTopWidth: 0,
           borderWidth: 1,
           borderColor: "rgba(255,255,255,0.08)",
@@ -55,7 +55,7 @@ function TabContent() {
         name="explore"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "code" : "code-outline"} size={26} color={color} />
+            <Ionicons name={focused ? "information" : "information-outline"} size={26} color={color} />
           ),
         }}
      />
