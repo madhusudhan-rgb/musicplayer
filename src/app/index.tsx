@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
+import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -25,6 +26,10 @@ export default function MusicPlayer() {
   const status = useAudioPlayerStatus(player);
   const progressBarRef = useRef<View>(null);
 
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
+
   const formatTime = (seconds: number): string => {
     if (!seconds || isNaN(seconds)) return "0:00";
     const m = Math.floor(seconds / 60);
@@ -42,7 +47,7 @@ export default function MusicPlayer() {
       const result = await DocumentPicker.getDocumentAsync({
         type: "audio/*",
         multiple: true,
-        copyToCacheDirectory: false, // Android: keeps content:// URI so expo-file-system can read it
+        copyToCacheDirectory: false,
       });
       if (!result.canceled && result.assets?.length > 0) {
         const newSongs = [...songs, ...result.assets];
@@ -117,8 +122,7 @@ export default function MusicPlayer() {
         playNext();
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status?.didJustFinish]);
+  }, [status?.didJustFinish, repeatMode]);
 
   function removeSong(index: number) {
     const newSongs = songs.filter((_, i) => i !== index);
@@ -147,7 +151,7 @@ export default function MusicPlayer() {
 
   return (
     <ImageBackground
-      source={require("../../assets/images/bg.avif")}
+      source={require("../../assets/images/bg.jpg")}
       style={styles.background}
       resizeMode="cover"
     >

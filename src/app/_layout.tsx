@@ -4,8 +4,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavbarProvider, useNavbar } from "../context/NavbarContext";
+import React from "react";
+import { Text, View } from "react-native";
 
-const ACCENT   = "#00cc2c";
+const ACCENT = "#00cc2c";
 const INACTIVE = "rgba(255,255,255,0.3)";
 
 function TabContent() {
@@ -43,7 +45,7 @@ function TabContent() {
         },
       }}
     >
-<Tabs.Screen
+      <Tabs.Screen
         name="index"
         options={{
           tabBarIcon: ({ color, focused }) => (
@@ -51,14 +53,14 @@ function TabContent() {
           ),
         }}
       />
-<Tabs.Screen
+      <Tabs.Screen
         name="explore"
         options={{
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "information" : "information-outline"} size={26} color={color} />
           ),
         }}
-     />
+      />
     </Tabs>
   );
 }
