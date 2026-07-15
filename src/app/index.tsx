@@ -117,7 +117,8 @@ export default function MusicPlayer() {
         playNext();
       }
     }
-  }, [status?.didJustFinish, repeatMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status?.didJustFinish]);
 
   function removeSong(index: number) {
     const newSongs = songs.filter((_, i) => i !== index);

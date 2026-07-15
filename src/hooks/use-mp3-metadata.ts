@@ -1,15 +1,3 @@
-/**
- * use-mp3-metadata.ts
- *
- * Reads ID3v2 tags (title, artist, album, cover art) from an MP3 URI.
- *
- * Android requirement — in your DocumentPicker call use:
- *   copyToCacheDirectory: false
- * This gives you a content:// URI which expo-file-system can read directly.
- * The default (true) creates a file:// copy with OS-level restricted permissions
- * that no read method can access.
- */
-
 import * as FileSystem from "expo-file-system/legacy";
 import { useEffect, useState } from "react";
 
@@ -228,8 +216,8 @@ function decodeText(data: Uint8Array): string {
     let text = "";
     for (let i = start; i + 1 <= end; i += 2) {
       const ch = isLE
-        ? data[i] | (data[i + 1] << 8)
-        : (data[i] << 8) | data[i + 1];
+        ? (data[i] | (data[i + 1] << 8))
+        : ((data[i] << 8) | data[i + 1]);
       if (ch !== 0) text += String.fromCharCode(ch);
     }
     return text.trim();
@@ -318,7 +306,7 @@ function parseAPIC(data: Uint8Array): { base64: string; mime: string } | null {
     }
 
     // Picture type byte (1 byte after MIME null), then description
-    let imageStart = mimeEnd + 2;
+    let imageStart = mimeEnd + 1;
 
     if (encoding === 1 || encoding === 2) {
       // UTF-16 description: double-null on even boundary

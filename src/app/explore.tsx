@@ -12,67 +12,94 @@ import {
 } from "react-native";
 import { CustomModal, ModalConfig } from "../components/CustomModal";
 
-
 export default function Contact() {
   const scaleTerms = useRef(new Animated.Value(1)).current;
   const scalerndm = useRef(new Animated.Value(1)).current;
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalConfig,  setModalConfig]  = useState<ModalConfig | null>(null);
+  const [modalConfig, setModalConfig] = useState<ModalConfig | null>(null);
 
-  const showModal = (config: ModalConfig) => { setModalConfig(config); setModalVisible(true); };
+  const showModal = (config: ModalConfig) => {
+    setModalConfig(config);
+    setModalVisible(true);
+  };
 
   const bounce = (scale: Animated.Value) => {
     Animated.sequence([
       Animated.timing(scale, { toValue: 0.94, duration: 80, useNativeDriver: true }),
-      Animated.timing(scale, { toValue: 1,    duration: 80, useNativeDriver: true }),
+      Animated.timing(scale, { toValue: 1, duration: 80, useNativeDriver: true }),
     ]).start();
   };
 
   const exitApp = () => {
-    if (Platform.OS === "android") { BackHandler.exitApp(); return; }
+    if (Platform.OS === "android") {
+      BackHandler.exitApp();
+      return;
+    }
     showModal({ title: "Exit", message: "Please close the app from the app switcher.", buttons: [{ text: "OK", style: "cancel" }] });
   };
 
   const showPrivacyAlert = () => {
-  showModal({
-    title: "Terms & Conditions",
-    message:
-      "This app is provided for entertainment purposes only, and the developer is not responsible for any damage, harm, or loss resulting from its use.\n\n " +
-      "By continuing, you agree to these terms.",
-    buttons: [
-      {
-        text: "Disagree",
-        style: "danger",
-        onPress: () =>
-          showModal({
-            title: "Access Denied",
-            message: "You must accept the terms to continue using the app.",
-            buttons: [
-              { text: "Exit", style: "danger", onPress: exitApp },
-              { text: "Back" },
-            ],
-          }),
-      },
-      {
-        text: "Agree",
-        onPress: () =>
-          showModal({
-            title: "Accepted",
-            message: "You have agreed to the Terms and Conditions.",
-            buttons: [{ text: "Continue" }],
-          }),
-      },
-      {
-        text: "Cpyright-policy",
-        onPress: () =>
-          Linking.openURL(
-            "https://creativecommons.org/publicdomain/zero/1.0/legalcode.en"
-          ),
-      },
-    ],
-  });
-};
+    showModal({
+      title: "Terms & Conditions",
+      message:
+        "This app is provided for entertainment purposes only, and the developer is not responsible for any damage, harm, or loss resulting from its use.\n\n " +
+        "By continuing, you agree to these terms.",
+      buttons: [
+        {
+          text: "Disagree",
+          style: "danger",
+          onPress: () =>
+            showModal({
+              title: "Access Denied",
+              message: "You must accept the terms to continue using the app.",
+              buttons: [
+                { text: "Exit", style: "danger", onPress: exitApp },
+                { text: "Back" },
+              ],
+            }),
+        },
+        {
+          text: "Agree",
+          onPress: () =>
+            showModal({
+              title: "Accepted",
+              message: "You have agreed to the Terms and Conditions.",
+              buttons: [{ text: "Continue" }],
+            }),
+        },
+        {
+          text: "Cpyright-policy",
+          onPress: () =>
+            Linking.openURL(
+              "https://creativecommons.org/publicdomain/zero/1.0/legalcode.en"
+            ),
+        },
+      ],
+    });
+  };
+
+  const buttonData = [
+    { scale: scaleTerms, icon: "📄", label: "Terms & Conditions", style: "secondary" as const, onPress: showPrivacyAlert },
+    {
+      scale: scalerndm,
+      icon: "🔗",
+      label: "Resources",
+      style: "green" as const,
+      onPress: () =>
+        showModal({
+          title: "Resources",
+          message:
+            "Images sourced from Pinterest. All images provided are owned by their respective owners or the users who post the images in the Website.",
+          buttons: [
+            { text: "Image#1", onPress: () => Linking.openURL("https://www.pinterest.com/pin/1107955945860886546/") },
+            { text: "Image#2", onPress: () => Linking.openURL("https://www.pinterest.com/pin/853854410640464822/") },
+            { text: "OK", style: "cancel" },
+          ],
+        }),
+    },
+  ];
+
   return (
     <ImageBackground source={require("../../assets/images/bg1.jpg")} style={styles.background}>
       <View style={styles.overlay} />
@@ -85,27 +112,7 @@ export default function Contact() {
         </View>
 
         <View style={styles.card}>
-          {[
-            
-            {
-              scale: scaleTerms, icon: "📄", label: "Terms & Conditions",
-              style: "secondary" as const,
-              onPress: showPrivacyAlert,
-            },
-            {
-              scale: scalerndm, icon: "🔗", label: "Resources",
-              style: "green" as const,
-              onPress: () => showModal({
-                title: "Resources",
-                message: "Images sourced from Pinterest. All images provided are owned by their respective owners or the users who post the images in the Website.",
-                buttons: [
-                  { text: "Image#1",    onPress: () => Linking.openURL("https://www.pinterest.com/pin/1107955945860886546/") },
-                  {text : "Image#2", onPress: ()=> Linking.openURL("https://www.pinterest.com/pin/853854410640464822/")},
-                  { text: "OK", style: "cancel" },
-                ],
-              }),
-            },
-          ].map(({ scale, icon, label, style, onPress }) => (
+          {buttonData.map(({ scale, icon, label, style, onPress }) => (
             <Pressable key={label} onPress={() => { bounce(scale); onPress(); }}>
               <Animated.View style={[styles.btn, styles[`btn_${style}`], { transform: [{ scale }] }]}>
                 <Text style={styles.btnIcon}>{icon}</Text>
@@ -113,7 +120,6 @@ export default function Contact() {
               </Animated.View>
             </Pressable>
           ))}
-          
         </View>
       </View>
     </ImageBackground>
